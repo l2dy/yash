@@ -26,9 +26,11 @@
 topdir = .
 
 CC = @CC@
+CXX = @CXX@
 CFLAGS = @CFLAGS@
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
+FUZZ_LDFLAGS = $(subst fuzzer-no-link,fuzzer,$(LDFLAGS))
 LDLIBS = @LDLIBS@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -43,6 +45,7 @@ HISTORY_OBJS = history.o
 BUILTINS_ARCHIVE = builtins/builtins.a
 LINEEDIT_ARCHIVE = lineedit/lineedit.a
 OBJS = @OBJS@
+FUZZ_OBJS = $(filter-out yash.o,$(OBJS)) fuzz_parser_lib.o fuzz_parser.o
 TARGET = @TARGET@
 VERSION = @VERSION@
 COPYRIGHT = @COPYRIGHT@
@@ -68,6 +71,12 @@ all: $(TARGET) share/config tester mofiles docs
 .c.o:
 	@rm -f $@
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
+
+%.o : %.cpp
+	@rm -f $@
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c $<
+fuzz_parser: $(FUZZ_OBJS)
+	$(CXX) $(FUZZ_LDFLAGS) -o $@ $(FUZZ_OBJS) $(LDLIBS)
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)

@@ -310,6 +310,7 @@ fail () {
 
 
 cc="${CC-c99}"
+cxx="${CXX-g++}"
 cflags="${CFLAGS--O1 -g}"
 cppflags="${CPPFLAGS-${null}}"
 ldflags="${LDFLAGS-${null}}"
@@ -1719,6 +1720,7 @@ fi
 MAKE_INCLUDE="${MAKE_INCLUDE-${make_include}}"
 MAKE_SHELL="${MAKE_SHELL-${make_shell}}"
 CC="${CC-${cc}}"
+CXX="${CXX-${cxx}}"
 CFLAGS="${CFLAGS-${cflags}}${CADDS:+ ${CADDS}}"
 CPPFLAGS="${CPPFLAGS-${cppflags}}${CPPADDS:+ ${CPPADDS}}"
 LDFLAGS="${LDFLAGS-${ldflags}}${LDADDS:+ ${LDADDS}}"
@@ -1794,6 +1796,7 @@ sed_subst_cmd="
 s!@MAKE_INCLUDE@!${MAKE_INCLUDE}!g
 s!@MAKE_SHELL@!${MAKE_SHELL}!g
 s!@CC@!${CC}!g
+s!@CXX@!${CXX}!g
 s!@CFLAGS@!${CFLAGS}!g
 s!@CPPFLAGS@!${CPPFLAGS}!g
 s!@LDFLAGS@!${LDFLAGS}!g
