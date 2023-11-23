@@ -51,8 +51,29 @@
 
 /* FUZZ start */
 
+#include "plist.h"
+
 static void parse_and_exec(struct parseparam_T *pinfo, bool finally_exit)
     __attribute__((nonnull(1)));
+
+static void fuzz_exec_and_or_lists(const and_or_T *a);
+static void fuzz_exec_simple_command(const command_T *c);
+static void fuzz_exec_simple_command_without_words(const command_T *c);
+
+void fuzz_init_all()
+{
+    command_name = L"";
+
+    init_cmdhash();
+    init_homedirhash();
+    init_environment();
+    init_job();
+    init_builtin();
+    init_alias();
+    init_variables();
+
+    set_positional_parameters((void *[]) { (void *) L"", NULL });
+}
 
 /********** Functions to Execute Commands **********/
 
@@ -94,6 +115,7 @@ void parse_and_exec(parseparam_T *pinfo, bool finally_exit)
         switch (read_and_parse(pinfo, &commands)) {
             case PR_OK:
                 if (commands != NULL) {
+                    fuzz_exec_and_or_lists(commands);
                     andorsfree(commands);
                 }
                 break;
@@ -116,6 +138,67 @@ void parse_and_exec(parseparam_T *pinfo, bool finally_exit)
     }
 out:
     return;
+}
+
+/* Executes the and-or lists.
+ * If `finally_exit' is true, the shell exits after execution. */
+void fuzz_exec_and_or_lists(const and_or_T *a)
+{
+    command_T *c;
+    pipeline_T *p;
+
+    while (a != NULL) {
+        for (p = a->ao_pipelines; p != NULL; p = p->next) {
+            for (c = p->pl_commands; c != NULL; c = c->next) {
+                if (c->c_type == CT_SIMPLE) {
+                    fuzz_exec_simple_command(c);
+                }
+            }
+        }
+        a = a->next;
+    }
+}
+
+/* Executes the simple command. */
+void fuzz_exec_simple_command(const command_T *c)
+{
+    /* expand the command words */
+    int argc;
+    void **argv;
+    if (!expand_line(c->c_words, &argc, &argv)) {
+        laststatus = Exit_EXPERROR;
+        goto done;
+    }
+
+    /* execute the remaining part */
+    fuzz_exec_simple_command_without_words(c);
+
+    /* cleanup */
+done1:
+    plfree(argv, free);
+done:
+    return;
+}
+
+/* Executes the simple command that has no expanded words.
+ * Returns true if the shell should exit. */
+void fuzz_exec_simple_command_without_words(const command_T *c)
+{
+    /* perform assignments */
+    open_new_environment(true);
+    bool ok = do_assignments(c->c_assigns, true, false);
+    close_current_environment();
+
+    if (!ok) {
+        laststatus = Exit_ASSGNERR;
+        return;
+    }
+
+    /* done? */
+    if (c->c_redirs == NULL) {
+        laststatus = Exit_SUCCESS;
+        return;
+    }
 }
 
 /* FUZZ end */

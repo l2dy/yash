@@ -21,12 +21,18 @@
 #include "option.h"
 
 void exec_mbs(const char *mbcode, const char *name);
+void fuzz_init_all();
 
 static int SetPosixlyCorrectFlag(const uint8_t *Data, size_t Size) {
     if (Size < 2) {
         return -1;
     }
     posixly_correct = Data[0] & 0x1;
+    return 0;
+}
+
+int LLVMFuzzerInitialize(int *argc, char ***argv) {
+    fuzz_init_all();
     return 0;
 }
 

@@ -417,6 +417,7 @@ void update_environment(const wchar_t *name)
         return;
 
     char *value = get_exported_value(name);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     if (value == NULL) {
         if (xunsetenv(mname) < 0)
             xerror(errno, Ngt("failed to unset environment variable $%s"),
@@ -425,6 +426,7 @@ void update_environment(const wchar_t *name)
         if (setenv(mname, value, true) < 0)
             xerror(errno, Ngt("failed to set environment variable $%s"), mname);
     }
+#endif
 
     free(mname);
     free(value);

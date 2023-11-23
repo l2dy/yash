@@ -538,7 +538,11 @@ default_:
             merge_expand_four(&e2, &e, &valuebuf, &ccbuf);
             break;
         case WT_CMDSUB:
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+            s = xwcsdup(L""); /* FUZZ */
+#else
             s = exec_command_substitution(&w->wu_cmdsub);
+#endif
             goto cat_s;
         case WT_ARITH:
             s = expand_single(w->wu_arith, TT_NONE, Q_INDQ, ES_NONE);
